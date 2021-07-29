@@ -53,7 +53,7 @@ extension DatabaseManager {
     }
     
     func resumeLongLivedOperationIfPossible() {
-        if #available(iOS 15.0) {
+        if #available(iOS 15.0, *) {
             // do nothing.
         } else {
             container.fetchAllLongLivedOperationIDs { [weak self]( opeIDs, error) in
