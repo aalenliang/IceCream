@@ -78,8 +78,7 @@ extension SyncEngine {
     /// Push all existing local data to CloudKit
     /// You should NOT to call this method too frequently
     public func pushAll(objects: [Syncable]? = nil) {
-        let objects = objects?.filter(databaseManager.syncObjects.contains($0)) ?? databaseManager.syncObjects
-        objects.forEach { $0.pushLocalObjectsToCloudKit() }
+        (objects ?? databaseManager.syncObjects).forEach { $0.pushLocalObjectsToCloudKit() }
     }
 
     public func push(objects: [CKRecordConvertible], completionHandler: ((Error?) -> Void)? = nil) {
