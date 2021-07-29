@@ -80,7 +80,12 @@ extension SyncEngine {
     public func pushAll() {
         databaseManager.syncObjects.forEach { $0.pushLocalObjectsToCloudKit() }
     }
-    
+
+    public func push(objects: [CKRecordConvertible], completionHandler: ((Error?) -> Void)? = nil) {
+        let recordsToStore: [CKRecord] = objects.filter { !$0.isDeleted }.map { $0.record }
+        let recordsIDsToDelete: [CKRecord.ID] = objects.filter { $0.isDeleted }.map { $0.recordID }
+        databaseManager.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordsIDsToDelete, completion: completionHandler)
+    }
 }
 
 public enum Notifications: String, NotificationName {
