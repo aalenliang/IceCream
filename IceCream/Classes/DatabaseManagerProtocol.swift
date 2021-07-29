@@ -62,7 +62,7 @@ extension DatabaseManager {
                         modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
                             print("Resume modify records success!")
                         }
-                        self.database.add(modifyOp)
+                        self.container.add(modifyOp)
                     }
                 })
             }
