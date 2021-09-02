@@ -53,22 +53,22 @@ extension DatabaseManager {
     }
     
     func resumeLongLivedOperationIfPossible() {
-        if #available(iOS 15.0, *) {
-            // do nothing.
-        } else {
-            container.fetchAllLongLivedOperationIDs { [weak self]( opeIDs, error) in
-                guard let self = self, error == nil, let ids = opeIDs else { return }
-                for id in ids {
-                    self.container.fetchLongLivedOperation(withID: id, completionHandler: { [weak self](ope, error) in
-                        guard let self = self, error == nil else { return }
-                        if let modifyOp = ope as? CKModifyRecordsOperation {
-                            modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
-                                print("Resume modify records success!")
-                            }
+        container.fetchAllLongLivedOperationIDs { [weak self]( opeIDs, error) in
+            guard let self = self, error == nil, let ids = opeIDs else { return }
+            for id in ids {
+                self.container.fetchLongLivedOperation(withID: id, completionHandler: { [weak self](ope, error) in
+                    guard let self = self, error == nil else { return }
+                    if let modifyOp = ope as? CKModifyRecordsOperation {
+                        modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
+                            print("Resume modify records success!")
+                        }
+                        if #available(iOS 15, *) {
+                            self.database.add(modifyOp)
+                        } else {
                             self.container.add(modifyOp)
                         }
-                    })
-                }
+                    }
+                })
             }
         }
     }
