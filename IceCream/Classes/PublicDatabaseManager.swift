@@ -62,6 +62,14 @@ final class PublicDatabaseManager: DatabaseManager {
             }
         }
     }
+
+    func unregisterLocalDatabase() {
+        self.syncObjects.forEach { object in
+            DispatchQueue.main.async {
+                object.unregisterLocalDatabase()
+            }
+        }
+    }
     
     // MARK: - Private Methods
     private func excuteQueryOperation(queryOperation: CKQueryOperation,on syncObject: Syncable, callback: ((Error?) -> Void)? = nil) {
@@ -89,7 +97,8 @@ final class PublicDatabaseManager: DatabaseManager {
                 break
             }
         }
-        
+
+        print("Add operation: excuteQueryOperation")
         database.add(queryOperation)
     }
     
@@ -108,6 +117,7 @@ final class PublicDatabaseManager: DatabaseManager {
             
         }
         createOp.qualityOfService = .utility
+        print("Add operation: createSubscriptionInPublicDatabase")
         database.add(createOp)
         #endif
     }

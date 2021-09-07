@@ -150,6 +150,12 @@ extension SyncObject: Syncable {
             })
         }
     }
+
+    public func unregisterLocalDatabase() {
+        BackgroundWorker.shared.start {
+            self.notificationToken = nil
+        }
+    }
     
     public func resolvePendingRelationships() {
         pendingUTypeRelationshipsWorker.resolvePendingListElements()

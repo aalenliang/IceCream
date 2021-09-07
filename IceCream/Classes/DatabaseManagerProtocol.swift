@@ -37,6 +37,7 @@ protocol DatabaseManager: class {
     func startObservingTermination()
     func createDatabaseSubscriptionIfHaveNot()
     func registerLocalDatabase()
+    func unregisterLocalDatabase()
     
     func cleanUp()
 }
@@ -63,6 +64,7 @@ extension DatabaseManager {
                             print("Resume modify records success!")
                         }
                         if #available(iOS 15, *) {
+                            print("Add operation: fetchLongLivedOperation")
                             self.database.add(modifyOp)
                         } else {
                             self.container.add(modifyOp)
@@ -131,7 +133,8 @@ extension DatabaseManager {
                 return
             }
         }
-        
+
+        print("Add operation: syncRecordsToCloudKit")
         database.add(modifyOpe)
     }
     

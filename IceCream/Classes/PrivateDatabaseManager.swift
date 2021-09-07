@@ -60,7 +60,8 @@ final class PrivateDatabaseManager: DatabaseManager {
                 return
             }
         }
-        
+
+        print("Add operation: fetchChangesInDatabase")
         database.add(changesOperation)
     }
     
@@ -90,7 +91,8 @@ final class PrivateDatabaseManager: DatabaseManager {
                 return
             }
         }
-        
+
+        print("Add operation: createCustomZonesIfAllowed")
         database.add(modifyOp)
     }
     
@@ -110,6 +112,7 @@ final class PrivateDatabaseManager: DatabaseManager {
             self.subscriptionIsLocallyCached = true
         }
         createOp.qualityOfService = .utility
+        print("Add operation: createDatabaseSubscriptionIfHaveNot")
         database.add(createOp)
         #endif
     }
@@ -130,6 +133,14 @@ final class PrivateDatabaseManager: DatabaseManager {
         self.syncObjects.forEach { object in
             DispatchQueue.main.async {
                 object.registerLocalDatabase()
+            }
+        }
+    }
+
+    func unregisterLocalDatabase() {
+        self.syncObjects.forEach { object in
+            DispatchQueue.main.async {
+                object.unregisterLocalDatabase()
             }
         }
     }
@@ -190,7 +201,8 @@ final class PrivateDatabaseManager: DatabaseManager {
             }
             callback?(error)
         }
-        
+
+        print("Add operation: fetchChangesInZones")
         database.add(changesOp)
     }
 }

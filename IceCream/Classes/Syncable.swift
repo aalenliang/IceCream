@@ -23,6 +23,7 @@ public protocol Syncable: class {
     
     /// Realm Database related
     func registerLocalDatabase()
+    func unregisterLocalDatabase()
     func cleanUp()
     func add(record: CKRecord)
     func delete(recordID: CKRecord.ID)

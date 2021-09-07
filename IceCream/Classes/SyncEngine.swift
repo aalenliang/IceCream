@@ -86,6 +86,14 @@ extension SyncEngine {
         let recordsIDsToDelete: [CKRecord.ID] = objects.filter { $0.isDeleted }.map { $0.recordID }
         databaseManager.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordsIDsToDelete, completion: completionHandler)
     }
+
+    public func registerLocalDatabase() {
+        databaseManager.registerLocalDatabase()
+    }
+
+    public func unregisterLocalDatabase() {
+        databaseManager.unregisterLocalDatabase()
+    }
 }
 
 public enum Notifications: String, NotificationName {
