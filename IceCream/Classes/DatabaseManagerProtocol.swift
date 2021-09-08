@@ -65,7 +65,7 @@ extension DatabaseManager {
                         }
                         if #available(iOS 15, *) {
                             print("Add operation: fetchLongLivedOperation")
-                            self.database.add(modifyOp)
+                            // self.database.add(modifyOp)
                         } else {
                             self.container.add(modifyOp)
                         }
