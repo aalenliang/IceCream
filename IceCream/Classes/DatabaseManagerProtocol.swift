@@ -144,7 +144,7 @@ extension DatabaseManager {
             }
         }
 
-        print("🍦 Add operation: syncRecordsToCloudKit")
+        print("🍦 Add operation: syncRecordsToCloudKit store \(recordsToStore.count) \(recordsToStore.first?.recordType ?? "unknown") objects, delete \(recordIDsToDelete.count) objects")
         database.add(modifyOpe)
     }
     
