@@ -54,6 +54,18 @@ final class PublicDatabaseManager: DatabaseManager {
         
         #endif
     }
+
+    func stopObservingTermination() {
+        #if os(iOS) || os(tvOS)
+
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willTerminateNotification, object: nil)
+
+        #elseif os(macOS)
+
+        NotificationCenter.default.removeObserver(self, name: NSApplication.willTerminateNotification, object: nil)
+
+        #endif
+    }
     
     func registerLocalDatabase() {
         syncObjects.forEach { object in

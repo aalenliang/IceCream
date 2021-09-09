@@ -19,11 +19,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        syncEngine = SyncEngine(objects: [
-            SyncObject(type: Dog.self),
-            SyncObject(type: Cat.self),
-            SyncObject(type: Person.self, uListElementType: Cat.self)
-            ])
+        syncEngine = SyncEngine(
+            objects: [
+                SyncObject(type: Dog.self),
+                SyncObject(type: Cat.self),
+                SyncObject(type: Person.self, uListElementType: Cat.self)
+            ],
+            callback: { syncEngine in
+                syncEngine.pull(completionHandler: nil)
+                syncEngine.startObservingLocalAndRemoteChanges()
+            })
         
         /// If you wanna test public Database, comment the above syncEngine code and uncomment the following one
         /// Besides, uncomment Line 26 to 28 in Person.swift file

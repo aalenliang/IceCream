@@ -17,7 +17,7 @@ public final class SyncEngine {
     
     private let databaseManager: DatabaseManager
     
-    public convenience init(objects: [Syncable], databaseScope: CKDatabase.Scope = .private, container: CKContainer = .default(), callback: ((Error?) -> Void)? = nil) {
+    public convenience init(objects: [Syncable], databaseScope: CKDatabase.Scope = .private, container: CKContainer = .default(), callback: @escaping (SyncEngine) -> Void) {
         switch databaseScope {
         case .private:
             let privateDatabaseManager = PrivateDatabaseManager(objects: objects, container: container)
@@ -30,31 +30,33 @@ public final class SyncEngine {
         }
     }
     
-    private init(databaseManager: DatabaseManager, callback: ((Error?) -> Void)?) {
+    private init(databaseManager: DatabaseManager, callback: @escaping (SyncEngine) -> Void) {
         self.databaseManager = databaseManager
         setup(callback)
     }
     
-    private func setup(_ callback: ((Error?) -> Void)?) {
+    private func setup(_ callback: @escaping (SyncEngine) -> Void) {
         databaseManager.prepare()
         databaseManager.container.accountStatus { [weak self] (status, error) in
             guard let self = self else { return }
             switch status {
             case .available:
-                self.databaseManager.registerLocalDatabase()
+                // self.databaseManager.registerLocalDatabase()
                 self.databaseManager.createCustomZonesIfAllowed()
-                self.databaseManager.fetchChangesInDatabase(callback)
+                // self.databaseManager.fetchChangesInDatabase(callback)
                 self.databaseManager.resumeLongLivedOperationIfPossible()
-                self.databaseManager.startObservingRemoteChanges()
-                self.databaseManager.startObservingTermination()
+                // self.databaseManager.startObservingRemoteChanges()
+                // self.databaseManager.startObservingTermination()
                 self.databaseManager.createDatabaseSubscriptionIfHaveNot()
+                callback(self)
             case .noAccount, .restricted:
                 guard self.databaseManager is PublicDatabaseManager else { break }
-                self.databaseManager.fetchChangesInDatabase(callback)
+                // self.databaseManager.fetchChangesInDatabase(callback)
                 self.databaseManager.resumeLongLivedOperationIfPossible()
-                self.databaseManager.startObservingRemoteChanges()
-                self.databaseManager.startObservingTermination()
+                // self.databaseManager.startObservingRemoteChanges()
+                // self.databaseManager.startObservingTermination()
                 self.databaseManager.createDatabaseSubscriptionIfHaveNot()
+                callback(self)
             case .couldNotDetermine:
                 break
             @unknown default:
@@ -87,12 +89,20 @@ extension SyncEngine {
         databaseManager.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordsIDsToDelete, completion: completionHandler)
     }
 
-    public func registerLocalDatabase() {
-        databaseManager.registerLocalDatabase()
+    public func startObservingLocalAndRemoteChanges() {
+        if self.databaseManager is PrivateDatabaseManager {
+            databaseManager.registerLocalDatabase()
+        }
+        databaseManager.startObservingRemoteChanges()
+        databaseManager.startObservingTermination()
     }
 
-    public func unregisterLocalDatabase() {
-        databaseManager.unregisterLocalDatabase()
+    public func stopObservingLocalAndRemoteChanges() {
+        if self.databaseManager is PrivateDatabaseManager {
+            databaseManager.unregisterLocalDatabase()
+        }
+        databaseManager.stopObservingRemoteChanges()
+        databaseManager.stopObservingTermination()
     }
 }
 

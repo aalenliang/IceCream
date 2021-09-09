@@ -34,7 +34,9 @@ protocol DatabaseManager: class {
     
     func createCustomZonesIfAllowed()
     func startObservingRemoteChanges()
+    func stopObservingRemoteChanges()
     func startObservingTermination()
+    func stopObservingTermination()
     func createDatabaseSubscriptionIfHaveNot()
     func registerLocalDatabase()
     func unregisterLocalDatabase()
@@ -82,6 +84,10 @@ extension DatabaseManager {
                 self.fetchChangesInDatabase(nil)
             }
         })
+    }
+
+    func stopObservingRemoteChanges() {
+        NotificationCenter.default.removeObserver(self, name: Notifications.cloudKitDataDidChangeRemotely.name, object: nil)
     }
     
     /// Sync local data to CloudKit
