@@ -63,10 +63,10 @@ extension DatabaseManager {
                     guard let self = self, error == nil else { return }
                     if let modifyOp = ope as? CKModifyRecordsOperation {
                         modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
-                            print("Resume modify records success!")
+                            print("🍦 Resume modify records success!")
                         }
                         if #available(iOS 15, *) {
-                            print("Add operation: fetchLongLivedOperation")
+                            print("🍦 Add operation: fetchLongLivedOperation")
                             // self.database.add(modifyOp)
                         } else {
                             self.container.add(modifyOp)
@@ -140,7 +140,7 @@ extension DatabaseManager {
             }
         }
 
-        print("Add operation: syncRecordsToCloudKit")
+        print("🍦 Add operation: syncRecordsToCloudKit")
         database.add(modifyOpe)
     }
     

@@ -110,7 +110,7 @@ final class PublicDatabaseManager: DatabaseManager {
             }
         }
 
-        print("Add operation: excuteQueryOperation")
+        print("🍦 Add operation: excuteQueryOperation")
         database.add(queryOperation)
     }
     
@@ -129,7 +129,7 @@ final class PublicDatabaseManager: DatabaseManager {
             
         }
         createOp.qualityOfService = .utility
-        print("Add operation: createSubscriptionInPublicDatabase")
+        print("🍦 Add operation: createSubscriptionInPublicDatabase")
         database.add(createOp)
         #endif
     }

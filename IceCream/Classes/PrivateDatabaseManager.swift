@@ -31,6 +31,7 @@ final class PrivateDatabaseManager: DatabaseManager {
         
         /// Only update the changeToken when fetch process completes
         changesOperation.changeTokenUpdatedBlock = { [weak self] newToken in
+            print("🍦 Database change token updated")
             self?.databaseChangeToken = newToken
         }
         
@@ -40,28 +41,33 @@ final class PrivateDatabaseManager: DatabaseManager {
             guard let self = self else { return }
             switch ErrorHandler.shared.resultType(with: error) {
             case .success:
+                print("🍦 Database fetch completed, token updated")
                 self.databaseChangeToken = newToken
                 // Fetch the changes in zone level
                 self.fetchChangesInZones(callback)
             case .retry(let timeToWait, _):
+                print("🍦 Database fetch needs retry")
                 ErrorHandler.shared.retryOperationIfPossible(retryAfter: timeToWait, block: {
                     self.fetchChangesInDatabase(callback)
                 })
             case .recoverableError(let reason, _):
                 switch reason {
                 case .changeTokenExpired:
+                    print("🍦 Database fetch token expired")
                     /// The previousServerChangeToken value is too old and the client must re-sync from scratch
                     self.databaseChangeToken = nil
                     self.fetchChangesInDatabase(callback)
                 default:
+                    print("🍦 Database fetch unhandled recoverable error: \(reason)")
                     return
                 }
             default:
+                print("🍦 Database unhandled completion: \(error.debugDescription)")
                 return
             }
         }
 
-        print("Add operation: fetchChangesInDatabase")
+        print("🍦 Add operation: fetchChangesInDatabase")
         database.add(changesOperation)
     }
     
@@ -92,7 +98,7 @@ final class PrivateDatabaseManager: DatabaseManager {
             }
         }
 
-        print("Add operation: createCustomZonesIfAllowed")
+        print("🍦 Add operation: createCustomZonesIfAllowed")
         database.add(modifyOp)
     }
     
@@ -112,7 +118,7 @@ final class PrivateDatabaseManager: DatabaseManager {
             self.subscriptionIsLocallyCached = true
         }
         createOp.qualityOfService = .utility
-        print("Add operation: createDatabaseSubscriptionIfHaveNot")
+        print("🍦 Add operation: createDatabaseSubscriptionIfHaveNot")
         database.add(createOp)
         #endif
     }
@@ -162,6 +168,7 @@ final class PrivateDatabaseManager: DatabaseManager {
         changesOp.fetchAllChanges = true
         
         changesOp.recordZoneChangeTokensUpdatedBlock = { [weak self] zoneId, token, _ in
+            print("🍦 Record zone \(zoneId) change token updated")
             guard let self = self else { return }
             guard let syncObject = self.syncObjects.first(where: { $0.zoneID == zoneId }) else { return }
             syncObject.zoneChangesToken = token
@@ -170,12 +177,14 @@ final class PrivateDatabaseManager: DatabaseManager {
         changesOp.recordChangedBlock = { [weak self] record in
             /// The Cloud will return the modified record since the last zoneChangesToken, we need to do local cache here.
             /// Handle the record:
+            print("🍦 Record zone \(record.recordID) changed")
             guard let self = self else { return }
             guard let syncObject = self.syncObjects.first(where: { $0.recordType == record.recordType }) else { return }
             syncObject.add(record: record)
         }
         
         changesOp.recordWithIDWasDeletedBlock = { [weak self] recordId, _ in
+            print("🍦 Record \(recordId) deleted")
             guard let self = self else { return }
             guard let syncObject = self.syncObjects.first(where: { $0.zoneID == recordId.zoneID }) else { return }
             syncObject.delete(recordID: recordId)
@@ -185,23 +194,28 @@ final class PrivateDatabaseManager: DatabaseManager {
             guard let self = self else { return }
             switch ErrorHandler.shared.resultType(with: error) {
             case .success:
+                print("🍦 Record zone \(zoneId) fetch completed, token updated")
                 guard let syncObject = self.syncObjects.first(where: { $0.zoneID == zoneId }) else { return }
                 syncObject.zoneChangesToken = token
             case .retry(let timeToWait, _):
+                print("🍦 Record zone \(zoneId) fetch needs retry")
                 ErrorHandler.shared.retryOperationIfPossible(retryAfter: timeToWait, block: {
                     self.fetchChangesInZones(callback)
                 })
             case .recoverableError(let reason, _):
                 switch reason {
                 case .changeTokenExpired:
+                    print("🍦 Record zone \(zoneId) token expired")
                     /// The previousServerChangeToken value is too old and the client must re-sync from scratch
                     guard let syncObject = self.syncObjects.first(where: { $0.zoneID == zoneId }) else { return }
                     syncObject.zoneChangesToken = nil
                     self.fetchChangesInZones(callback)
                 default:
+                    print("🍦 Record zone \(zoneId) unhandled recoverable error: \(reason)")
                     return
                 }
             default:
+                print("🍦 Record zone \(zoneId) unhandled completion: \(error.debugDescription)")
                 return
             }
         }
@@ -214,7 +228,7 @@ final class PrivateDatabaseManager: DatabaseManager {
             callback?(error)
         }
 
-        print("Add operation: fetchChangesInZones")
+        print("🍦 Add operation: fetchChangesInZones")
         database.add(changesOp)
     }
 }
