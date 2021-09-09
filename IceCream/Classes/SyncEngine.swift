@@ -90,6 +90,8 @@ extension SyncEngine {
     }
 
     public func startObservingLocalAndRemoteChanges() {
+        stopObservingLocalAndRemoteChanges() // Avoid add observer for multiple times.
+
         if self.databaseManager is PrivateDatabaseManager {
             databaseManager.registerLocalDatabase()
         }
