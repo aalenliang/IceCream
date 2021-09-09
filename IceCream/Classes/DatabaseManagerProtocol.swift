@@ -121,14 +121,17 @@ extension DatabaseManager {
             
             switch ErrorHandler.shared.resultType(with: error) {
             case .success:
+                print("🍦 Modify record completed")
                 DispatchQueue.main.async {
                     completion?(nil)
                 }
             case .retry(let timeToWait, _):
+                print("🍦 Modify record needs retry")
                 ErrorHandler.shared.retryOperationIfPossible(retryAfter: timeToWait) {
                     self.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordIDsToDelete, completion: completion)
                 }
             case .chunk:
+                print("🍦 Modify record needs chunk")
                 /// CloudKit says maximum number of items in a single request is 400.
                 /// So I think 300 should be fine by them.
                 let chunkedRecords = recordsToStore.chunkItUp(by: 300)
@@ -136,6 +139,7 @@ extension DatabaseManager {
                     self.syncRecordsToCloudKit(recordsToStore: chunk, recordIDsToDelete: recordIDsToDelete, completion: completion)
                 }
             default:
+                print("🍦 Modify record unhandled completion: \(error.debugDescription)")
                 return
             }
         }
