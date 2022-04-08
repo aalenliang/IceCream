@@ -89,23 +89,23 @@ extension SyncEngine {
         databaseManager.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordsIDsToDelete, completion: completionHandler)
     }
 
-//    public func startObservingLocalAndRemoteChanges() {
-//        stopObservingLocalAndRemoteChanges() // Avoid add observer for multiple times.
-//
-//        if self.databaseManager is PrivateDatabaseManager {
-//            databaseManager.registerLocalDatabase()
-//        }
-//        databaseManager.startObservingRemoteChanges()
-//        databaseManager.startObservingTermination()
-//    }
-//
-//    public func stopObservingLocalAndRemoteChanges() {
-//        if self.databaseManager is PrivateDatabaseManager {
-//            databaseManager.unregisterLocalDatabase()
-//        }
-//        databaseManager.stopObservingRemoteChanges()
-//        databaseManager.stopObservingTermination()
-//    }
+    public func startObservingLocalAndRemoteChanges() {
+        stopObservingLocalAndRemoteChanges() // Avoid add observer for multiple times.
+
+        if self.databaseManager is PrivateDatabaseManager {
+            databaseManager.registerLocalDatabase()
+        }
+        databaseManager.startObservingRemoteChanges()
+        databaseManager.startObservingTermination()
+    }
+
+    public func stopObservingLocalAndRemoteChanges() {
+        if self.databaseManager is PrivateDatabaseManager {
+            databaseManager.unregisterLocalDatabase()
+        }
+        databaseManager.stopObservingRemoteChanges()
+        databaseManager.stopObservingTermination()
+    }
 
     public func partiallyPauseSync() {
         databaseManager.syncObjects.forEach { $0.pause() }

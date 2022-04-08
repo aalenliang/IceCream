@@ -75,13 +75,13 @@ final class PublicDatabaseManager: DatabaseManager {
         }
     }
 
-//    func unregisterLocalDatabase() {
-//        self.syncObjects.forEach { object in
-//            DispatchQueue.main.async {
-//                object.unregisterLocalDatabase()
-//            }
-//        }
-//    }
+    func unregisterLocalDatabase() {
+        self.syncObjects.forEach { object in
+            DispatchQueue.main.async {
+                object.unregisterLocalDatabase()
+            }
+        }
+    }
     
     // MARK: - Private Methods
     private func excuteQueryOperation(queryOperation: CKQueryOperation,on syncObject: Syncable, callback: ((Error?) -> Void)? = nil) {
