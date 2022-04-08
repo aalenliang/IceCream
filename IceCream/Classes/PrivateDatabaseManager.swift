@@ -155,13 +155,13 @@ final class PrivateDatabaseManager: DatabaseManager {
         }
     }
 
-    func unregisterLocalDatabase() {
-        self.syncObjects.forEach { object in
-            DispatchQueue.main.async {
-                object.unregisterLocalDatabase()
-            }
-        }
-    }
+//    func unregisterLocalDatabase() {
+//        self.syncObjects.forEach { object in
+//            DispatchQueue.main.async {
+//                object.unregisterLocalDatabase()
+//            }
+//        }
+//    }
     
     private func fetchChangesInZones(_ callback: ((Error?) -> Void)? = nil) {
         let changesOp = CKFetchRecordZoneChangesOperation(recordZoneIDs: zoneIds, optionsByRecordZoneID: zoneIdOptions)
