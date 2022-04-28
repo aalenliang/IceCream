@@ -62,11 +62,23 @@ extension DatabaseManager {
                 self.container.fetchLongLivedOperation(withID: id, completionHandler: { [weak self](ope, error) in
                     guard let self = self, error == nil else { return }
                     if let modifyOp = ope as? CKModifyRecordsOperation {
-                        modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
-                            print("🍦 Resume modify records success!")
-                        }
                         if #available(iOS 15, *) {
-                            print("🍦 Add operation: fetchLongLivedOperation")
+                            modifyOp.modifyRecordsResultBlock = { result in
+                                print("🍦 modify result: \(result)")
+                            }
+                        } else {
+                            modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
+                                print("🍦 Resume modify records success!")
+                            }
+                        }
+                        
+                        if let isFinished = ope?.isFinished, !isFinished {
+                            print("🍦 Cancel operation")
+                            ope?.cancel()
+                        }
+
+                        if #available(iOS 15, *) {
+                            print("🍦 Add fetched long-lived operation")
                             self.database.add(modifyOp)
                         } else {
                             self.container.add(modifyOp)
