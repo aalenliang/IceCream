@@ -28,15 +28,21 @@ public final class SyncObject<T, U, V, W> where T: Object & CKRecordConvertible 
     private let pendingUTypeRelationshipsWorker = PendingRelationshipsWorker<U>()
     private let pendingVTypeRelationshipsWorker = PendingRelationshipsWorker<V>()
     private let pendingWTypeRelationshipsWorker = PendingRelationshipsWorker<W>()
-    
+
+    public var canPauseSync: Bool
+    private var isPaused: Bool
+
     public init(
         realmConfiguration: Realm.Configuration = .defaultConfiguration,
         type: T.Type,
+        canPauseSync: Bool = true,
         uListElementType: U.Type? = nil,
         vListElementType: V.Type? = nil,
         wListElementType: W.Type? = nil
     ) {
         self.realmConfiguration = realmConfiguration
+        self.canPauseSync = canPauseSync
+        self.isPaused = false
     }
     
 }
@@ -127,14 +133,30 @@ extension SyncObject: Syncable {
             }
         }
     }
-    
+
+    public func pause() {
+        guard self.canPauseSync else {
+            return
+        }
+
+        self.isPaused = true
+    }
+
+    public func resume() {
+        guard self.canPauseSync else {
+            return
+        }
+
+        self.isPaused = false
+    }
+
     /// When you commit a write transaction to a Realm, all other instances of that Realm will be notified, and be updated automatically.
     /// For more: https://realm.io/docs/swift/latest/#writes
     public func registerLocalDatabase() {
         BackgroundWorker.shared.start {
             let realm = try! Realm(configuration: self.realmConfiguration)
             self.notificationToken = realm.objects(T.self).observe({ [weak self](changes) in
-                guard let self = self else { return }
+                guard let self = self, !self.isPaused else { return }
                 switch changes {
                 case .initial(_):
                     break
@@ -148,6 +170,12 @@ extension SyncObject: Syncable {
                     break
                 }
             })
+        }
+    }
+
+    public func unregisterLocalDatabase() {
+        BackgroundWorker.shared.start {
+            self.notificationToken = nil
         }
     }
     

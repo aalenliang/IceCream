@@ -17,44 +17,46 @@ public final class SyncEngine {
     
     private let databaseManager: DatabaseManager
     
-    public convenience init(objects: [Syncable], databaseScope: CKDatabase.Scope = .private, container: CKContainer = .default()) {
+    public convenience init(objects: [Syncable], databaseScope: CKDatabase.Scope = .private, container: CKContainer = .default(), callback: @escaping (SyncEngine) -> Void) {
         switch databaseScope {
         case .private:
             let privateDatabaseManager = PrivateDatabaseManager(objects: objects, container: container)
-            self.init(databaseManager: privateDatabaseManager)
+            self.init(databaseManager: privateDatabaseManager, callback: callback)
         case .public:
             let publicDatabaseManager = PublicDatabaseManager(objects: objects, container: container)
-            self.init(databaseManager: publicDatabaseManager)
+            self.init(databaseManager: publicDatabaseManager, callback: callback)
         default:
             fatalError("Shared database scope is not supported yet")
         }
     }
     
-    private init(databaseManager: DatabaseManager) {
+    private init(databaseManager: DatabaseManager, callback: @escaping (SyncEngine) -> Void) {
         self.databaseManager = databaseManager
-        setup()
+        setup(callback)
     }
     
-    private func setup() {
+    private func setup(_ callback: @escaping (SyncEngine) -> Void) {
         databaseManager.prepare()
         databaseManager.container.accountStatus { [weak self] (status, error) in
             guard let self = self else { return }
             switch status {
             case .available:
-                self.databaseManager.registerLocalDatabase()
+                // self.databaseManager.registerLocalDatabase()
                 self.databaseManager.createCustomZonesIfAllowed()
-                self.databaseManager.fetchChangesInDatabase(nil)
+                // self.databaseManager.fetchChangesInDatabase(callback)
                 self.databaseManager.resumeLongLivedOperationIfPossible()
-                self.databaseManager.startObservingRemoteChanges()
-                self.databaseManager.startObservingTermination()
+                // self.databaseManager.startObservingRemoteChanges()
+                // self.databaseManager.startObservingTermination()
                 self.databaseManager.createDatabaseSubscriptionIfHaveNot()
+                callback(self)
             case .noAccount, .restricted:
                 guard self.databaseManager is PublicDatabaseManager else { break }
-                self.databaseManager.fetchChangesInDatabase(nil)
+                // self.databaseManager.fetchChangesInDatabase(callback)
                 self.databaseManager.resumeLongLivedOperationIfPossible()
-                self.databaseManager.startObservingRemoteChanges()
-                self.databaseManager.startObservingTermination()
+                // self.databaseManager.startObservingRemoteChanges()
+                // self.databaseManager.startObservingTermination()
                 self.databaseManager.createDatabaseSubscriptionIfHaveNot()
+                callback(self)
             case .couldNotDetermine:
                 break
             @unknown default:
@@ -80,7 +82,38 @@ extension SyncEngine {
     public func pushAll() {
         databaseManager.syncObjects.forEach { $0.pushLocalObjectsToCloudKit() }
     }
-    
+
+    public func push(objects: [CKRecordConvertible], completionHandler: ((Error?) -> Void)? = nil) {
+        let recordsToStore: [CKRecord] = objects.filter { !$0.isDeleted }.map { $0.record }
+        let recordsIDsToDelete: [CKRecord.ID] = objects.filter { $0.isDeleted }.map { $0.recordID }
+        databaseManager.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordsIDsToDelete, completion: completionHandler)
+    }
+
+    public func startObservingLocalAndRemoteChanges() {
+        stopObservingLocalAndRemoteChanges() // Avoid add observer for multiple times.
+
+        if self.databaseManager is PrivateDatabaseManager {
+            databaseManager.registerLocalDatabase()
+        }
+        databaseManager.startObservingRemoteChanges()
+        databaseManager.startObservingTermination()
+    }
+
+    public func stopObservingLocalAndRemoteChanges() {
+        if self.databaseManager is PrivateDatabaseManager {
+            databaseManager.unregisterLocalDatabase()
+        }
+        databaseManager.stopObservingRemoteChanges()
+        databaseManager.stopObservingTermination()
+    }
+
+    public func partiallyPauseSync() {
+        databaseManager.syncObjects.forEach { $0.pause() }
+    }
+
+    public func resumeSync() {
+        databaseManager.syncObjects.forEach { $0.resume() }
+    }
 }
 
 public enum Notifications: String, NotificationName {

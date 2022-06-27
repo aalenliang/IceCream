@@ -34,9 +34,12 @@ protocol DatabaseManager: class {
     
     func createCustomZonesIfAllowed()
     func startObservingRemoteChanges()
+    func stopObservingRemoteChanges()
     func startObservingTermination()
+    func stopObservingTermination()
     func createDatabaseSubscriptionIfHaveNot()
     func registerLocalDatabase()
+    func unregisterLocalDatabase()
     
     func cleanUp()
 }
@@ -59,10 +62,27 @@ extension DatabaseManager {
                 self.container.fetchLongLivedOperation(withID: id, completionHandler: { [weak self](ope, error) in
                     guard let self = self, error == nil else { return }
                     if let modifyOp = ope as? CKModifyRecordsOperation {
-                        modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
-                            print("Resume modify records success!")
+                        if #available(iOS 15, *) {
+                            modifyOp.modifyRecordsResultBlock = { result in
+                                print("🍦 modify result: \(result)")
+                            }
+                        } else {
+                            modifyOp.modifyRecordsCompletionBlock = { (_,_,_) in
+                                print("🍦 Resume modify records success!")
+                            }
                         }
-                        self.container.add(modifyOp)
+                        
+                        if let isFinished = ope?.isFinished, !isFinished {
+                            print("🍦 Cancel operation")
+                            ope?.cancel()
+                        }
+
+                        if #available(iOS 15, *) {
+                            print("🍦 Add fetched long-lived operation")
+                            self.database.add(modifyOp)
+                        } else {
+                            self.container.add(modifyOp)
+                        }
                     }
                 })
             }
@@ -76,6 +96,10 @@ extension DatabaseManager {
                 self.fetchChangesInDatabase(nil)
             }
         })
+    }
+
+    func stopObservingRemoteChanges() {
+        NotificationCenter.default.removeObserver(self, name: Notifications.cloudKitDataDidChangeRemotely.name, object: nil)
     }
     
     /// Sync local data to CloudKit
@@ -109,14 +133,17 @@ extension DatabaseManager {
             
             switch ErrorHandler.shared.resultType(with: error) {
             case .success:
+                print("🍦 Modify record completed")
                 DispatchQueue.main.async {
                     completion?(nil)
                 }
             case .retry(let timeToWait, _):
+                print("🍦 Modify record needs retry")
                 ErrorHandler.shared.retryOperationIfPossible(retryAfter: timeToWait) {
                     self.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordIDsToDelete, completion: completion)
                 }
             case .chunk:
+                print("🍦 Modify record needs chunk")
                 /// CloudKit says maximum number of items in a single request is 400.
                 /// So I think 300 should be fine by them.
                 let chunkedRecords = recordsToStore.chunkItUp(by: 300)
@@ -124,10 +151,12 @@ extension DatabaseManager {
                     self.syncRecordsToCloudKit(recordsToStore: chunk, recordIDsToDelete: recordIDsToDelete, completion: completion)
                 }
             default:
+                print("🍦 Modify record unhandled completion: \(error.debugDescription)")
                 return
             }
         }
-        
+
+        print("🍦 Add operation: syncRecordsToCloudKit store \(recordsToStore.count) \(recordsToStore.first?.recordType ?? "unknown") objects, delete \(recordIDsToDelete.count) objects")
         database.add(modifyOpe)
     }
     

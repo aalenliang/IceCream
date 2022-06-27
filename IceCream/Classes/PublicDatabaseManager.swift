@@ -54,11 +54,31 @@ final class PublicDatabaseManager: DatabaseManager {
         
         #endif
     }
+
+    func stopObservingTermination() {
+        #if os(iOS) || os(tvOS)
+
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willTerminateNotification, object: nil)
+
+        #elseif os(macOS)
+
+        NotificationCenter.default.removeObserver(self, name: NSApplication.willTerminateNotification, object: nil)
+
+        #endif
+    }
     
     func registerLocalDatabase() {
         syncObjects.forEach { object in
             DispatchQueue.main.async {
                 object.registerLocalDatabase()
+            }
+        }
+    }
+
+    func unregisterLocalDatabase() {
+        self.syncObjects.forEach { object in
+            DispatchQueue.main.async {
+                object.unregisterLocalDatabase()
             }
         }
     }
@@ -89,7 +109,8 @@ final class PublicDatabaseManager: DatabaseManager {
                 break
             }
         }
-        
+
+        print("🍦 Add operation: excuteQueryOperation")
         database.add(queryOperation)
     }
     
@@ -108,6 +129,7 @@ final class PublicDatabaseManager: DatabaseManager {
             
         }
         createOp.qualityOfService = .utility
+        print("🍦 Add operation: createSubscriptionInPublicDatabase")
         database.add(createOp)
         #endif
     }

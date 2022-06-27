@@ -23,6 +23,7 @@ public protocol Syncable: class {
     
     /// Realm Database related
     func registerLocalDatabase()
+    func unregisterLocalDatabase()
     func cleanUp()
     func add(record: CKRecord)
     func delete(recordID: CKRecord.ID)
@@ -31,6 +32,8 @@ public protocol Syncable: class {
     
     /// CloudKit related
     func pushLocalObjectsToCloudKit()
+    func pause()
+    func resume()
     
     /// Callback
     var pipeToEngine: ((_ recordsToStore: [CKRecord], _ recordIDsToDelete: [CKRecord.ID]) -> ())? { get set }
